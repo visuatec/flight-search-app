@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Search</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <style>
+        /* Additional styling for the page */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+        input, button {
+            padding: 8px;
+            margin-top: 5px;
+            width: 200px;
+        }
+        button {
+            cursor: pointer;
+            width: 220px;
+            margin-top: 15px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Flight Search</h1>
+    <form id="flight-form">
+        <label for="source-airport">Source Airport:</label>
+        <input type="text" id="source-airport" name="source_airport" required>
+
+        <label for="destination-airport">Destination Airport:</label>
+        <input type="text" id="destination-airport" name="destination_airport" required>
+
+        <label for="departure-date">Departure Date:</label>
+        <input type="date" id="departure-date" name="departure_date" required>
+
+        <label for="arrival-date">Arrival Date:</label>
+        <input type="date" id="arrival-date" name="arrival_date" required>
+
+        <button type="submit">Search</button>
+    </form>
+
+    <table id="flights-table" border="1" style="display:none;">
+        <thead>
+            <tr>
+                <th>Departure Airport</th>
+                <th>Departure Date and Time</th>
+                <th>Arrival Airport</th>
+                <th>Arrival Date and Time</th>
+                <th>Cost</th>
+                <th>Flight Duration</th>
+                <th>Number of Stops</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <!-- jQuery and jQuery UI for autocomplete functionality -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+    <!-- Custom script to manage autocomplete and form submission -->
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+</body>
+</html>
