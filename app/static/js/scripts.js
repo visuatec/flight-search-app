@@ -18,27 +18,49 @@ $(document).ready(function () {
     }
 
     // Function to filter airports based on user input
-    function filterAirports(term) {
-        // Check if airportsData is an array
-        if (!Array.isArray(airportsData)) {
-            console.error("Expected an array for airports, but received:", airportsData);
+    function filterAirports(airports, term) {
+        // Check if airports is an array
+        if (!Array.isArray(airports)) {
+            console.error("Expected an array for airports, but received:", airports);
             return [];
         }
 
-        return airportsData.filter(airport => {
+        // Convert the search term to lowercase for case-insensitive comparison
+        const searchTerm = term.toLowerCase();
+
+        // Filter the airports based on whether the IATA code or the name includes the search term
+        const filteredAirports = airports.filter(airport => {
             const name = airport.label ? airport.label.toLowerCase() : "";
             const code = airport.value ? airport.value.toLowerCase() : "";
-            const searchTerm = term.toLowerCase();
 
-            return name.includes(searchTerm) || code.includes(searchTerm);
+            // Return true if either the IATA code or name includes the search term
+            return code.includes(searchTerm) || name.includes(searchTerm);
         });
+
+        // Sort the filtered airports to prioritize IATA code matches before name matches
+        filteredAirports.sort((a, b) => {
+            const aCode = a.value.toLowerCase();
+            const aName = a.label.toLowerCase();
+            const bCode = b.value.toLowerCase();
+            const bName = b.label.toLowerCase();
+
+            // Prioritize airports where the IATA code starts with the search term
+            if (aCode.startsWith(searchTerm) && !bCode.startsWith(searchTerm)) return -1;
+            if (!aCode.startsWith(searchTerm) && bCode.startsWith(searchTerm)) return 1;
+
+            // If both or neither start with the search term, prioritize by alphabetical order of IATA code
+            return aCode.localeCompare(bCode);
+        });
+
+        return filteredAirports;
     }
+
 
     // Set up autocomplete for Source Airport
     $("#source-airport").autocomplete({
         source: function (request, response) {
             console.log("Autocomplete Request for Source Airport:", request.term); // Debugging line
-            const results = filterAirports(request.term);
+            const results = filterAirports(airportsData, request.term); // Pass airportsData and the search term
             console.log("Autocomplete Results for Source Airport:", results); // Debugging line
             response(results);
         },
@@ -49,12 +71,13 @@ $(document).ready(function () {
     $("#destination-airport").autocomplete({
         source: function (request, response) {
             console.log("Autocomplete Request for Destination Airport:", request.term); // Debugging line
-            const results = filterAirports(request.term);
+            const results = filterAirports(airportsData, request.term); // Pass airportsData and the search term
             console.log("Autocomplete Results for Destination Airport:", results); // Debugging line
             response(results);
         },
         minLength: 2
     });
+
 
     // Handle form submission for flight search
     $('#flight-form').on('submit', function (e) {
