@@ -19,16 +19,19 @@ $(document).ready(function () {
 
     // Function to filter airports based on user input
     function filterAirports(term) {
-        // Ensure the data is not empty and filter by term
-        return airportsData
-            .filter(airport => 
-                airport.name.toLowerCase().includes(term.toLowerCase()) || 
-                airport.code.toLowerCase().includes(term.toLowerCase())
-            )
-            .map(airport => ({
-                label: `${airport.name} (${airport.code})`,
-                value: airport.code
-            }));
+        // Check if airportsData is an array
+        if (!Array.isArray(airportsData)) {
+            console.error("Expected an array for airports, but received:", airportsData);
+            return [];
+        }
+
+        return airportsData.filter(airport => {
+            const name = airport.label ? airport.label.toLowerCase() : "";
+            const code = airport.value ? airport.value.toLowerCase() : "";
+            const searchTerm = term.toLowerCase();
+
+            return name.includes(searchTerm) || code.includes(searchTerm);
+        });
     }
 
     // Set up autocomplete for Source Airport
@@ -59,6 +62,7 @@ $(document).ready(function () {
         const sourceAirport = $('#source-airport').val();
         const destinationAirport = $('#destination-airport').val();
         const departureDate = $('#departure-date').val();
+        const arrivalDate = $('#arrival-date').val();
 
         $.ajax({
             url: '/search-flights',
@@ -67,6 +71,7 @@ $(document).ready(function () {
                 source_airport: sourceAirport,
                 destination_airport: destinationAirport,
                 departure_date: departureDate,
+                arrival_date: arrivalDate,
             },
             success: function (flights) {
                 const tableBody = $('#flights-table tbody');

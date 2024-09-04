@@ -1,11 +1,7 @@
 # Import necessary modules
 from flask import Blueprint, render_template, jsonify, request
-import logging, os
-from dotenv import load_dotenv
-import requests
-
-# Load environment variables from .env file
-load_dotenv()
+from models import get_airports_autocomplete  # Import the function from your models
+import logging
 
 # Initialize Blueprint
 main = Blueprint("main", __name__)
@@ -14,15 +10,6 @@ main = Blueprint("main", __name__)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Base URL for FlightAware API
-BASE_URL = "https://aeroapi.flightaware.com/aeroapi"
-
-# Your FlightAware API key
-API_KEY = os.getenv("FLIGHTAWARE_API_KEY")
-
-# Headers for the API requests
-HEADERS = {"x-apikey": API_KEY}
-
 
 # Route for the home page
 @main.route("/")
@@ -30,46 +17,20 @@ def index():
     return render_template("index.html")
 
 
-# Route to fetch airport data
+# Route to fetch airport data for autocomplete
 @main.route("/get-airports", methods=["GET"])
 def get_airports():
-    keyword = request.args.get("keyword", "")
-    limit = request.args.get("limit", 10)  # Add limit to manage large data
-
-    # Log the incoming parameters for debugging
-    logger.info(f"Fetching airports with keyword: '{keyword}'")
+    term = request.args.get("keyword", "")
+    logger.info(f"Fetching airports for term: '{term}'")
 
     try:
-        # Construct the API URL
-        api_url = f"{BASE_URL}/airports"
-        params = {"query": keyword, "limit": limit}
-        response = requests.get(api_url, headers=HEADERS, params=params)
-        response.raise_for_status()  # Raise an error for bad responses
-
-        data = response.json()
-        logger.info("Full API Response: %s", data)
-
-        # Extracting airport data
-        airports = [
-            {
-                "name": airport.get("name", "Unknown"),
-                "code": airport.get("code", "Unknown"),
-                "city": airport.get("city", "Unknown"),
-                "country": airport.get("country", "Unknown"),
-                "latitude": airport.get("latitude", "Unknown"),
-                "longitude": airport.get("longitude", "Unknown"),
-            }
-            for airport in data.get("airports", [])
-        ]
-
-        logger.info("Filtered Airports Data: %s", airports)
+        # Query the database for matching airports
+        airports = get_airports_autocomplete(term)
+        logger.info(f"Found airports: {airports}")
         return jsonify(airports)
-    except requests.exceptions.RequestException as e:
-        logger.error("Error fetching airports from API: %s", e)
-        return jsonify({"error": "Failed to fetch airports"}), 500
     except Exception as e:
-        logger.error("Unexpected error: %s", e)
-        return jsonify({"error": "An unexpected error occurred"}), 500
+        logger.error(f"Error fetching airports: {e}")
+        return jsonify({"error": "Failed to fetch airports"}), 500
 
 
 # Route to search for flights between two airports on specified dates
