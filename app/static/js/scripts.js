@@ -60,35 +60,50 @@ $(document).ready(function () {
                 return_date: returnDate
             },
             success: function (flights) {
-                console.log("Flights data:", flights);
                 const tableBody = $('#flights-table tbody');
                 tableBody.empty();
 
+                if (flights.length === 0) {
+                    $('#no-flights-message').text('No flights found for the given criteria. Please try different dates or airports.').show();
+                    $('#flights-table').hide();
+                    return;
+                }
+
+                $('#no-flights-message').hide(); // Hide any previous messages
+
                 flights.forEach(flight => {
-                    if (!flight || !flight.departure || !flight.arrival || !flight.airline) {
-                        console.error("Incomplete flight data:", flight);
-                        return;
+                    if (flight.pricing_options && Array.isArray(flight.pricing_options)) {
+                        flight.pricing_options.forEach(option => {
+                            if (option.items && Array.isArray(option.items)) {
+                                option.items.forEach(item => {
+                                    tableBody.append(`
+                                        <tr>
+                                            <td>${item.price.amount || 'N/A'}</td>
+                                            <td>${item.agent_id || 'N/A'}</td>
+                                            <td><a href="${item.url}" target="_blank">Book Now</a></td>
+                                            <td>${option.score || 'N/A'}</td>
+                                        </tr>
+                                    `);
+                                });
+                            } else {
+                                console.error("Unexpected data format: 'items' is undefined or not an array in pricing option:", option);
+                            }
+                        });
+                    } else {
+                        console.error("Unexpected data format: 'pricing_options' is undefined or not an array in flight:", flight);
                     }
-                    tableBody.append(`
-                        <tr>
-                            <td>${flight.departure.airport || 'N/A'}</td>
-                            <td>${flight.departure.dateTime || 'N/A'}</td>
-                            <td>${flight.arrival.airport || 'N/A'}</td>
-                            <td>${flight.arrival.dateTime || 'N/A'}</td>
-                            <td>${flight.airline.name || 'N/A'}</td>
-                            <td>${flight.flightNumber || 'N/A'}</td>
-                            <td>${flight.price.total || 'N/A'}</td>
-                            <td>${flight.duration || 'N/A'}</td>
-                            <td>${flight.stops || 'N/A'}</td>
-                        </tr>
-                    `);
                 });
 
                 $('#flights-table').show();
             },
             error: function (error) {
-                console.error("Error fetching flight data:", error);
-                alert('Failed to fetch flight data. Please try again.');
+                if (error.status === 404) {
+                    $('#no-flights-message').text('No flights found for the given criteria. Please try different dates or airports.').show();
+                    $('#flights-table').hide();
+                } else {
+                    console.error("Error fetching flight data:", error);
+                    alert('Failed to fetch flight data. Please try again.');
+                }
             }
         });
     });

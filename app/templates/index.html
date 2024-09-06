@@ -46,6 +46,11 @@
         tbody tr:nth-child(even) {
             background-color: #f9f9f9;
         }
+        #no-flights-message {
+            color: red;
+            margin-top: 20px;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -66,18 +71,15 @@
         <button type="submit">Search</button>
     </form>
 
+    <div id="no-flights-message"></div> <!-- Placeholder for no flights message -->
+
     <table id="flights-table" border="1" style="display:none;">
         <thead>
             <tr>
-                <th>Departure Airport</th>
-                <th>Departure Date and Time</th>
-                <th>Arrival Airport</th>
-                <th>Arrival Date and Time</th>
-                <th>Airline</th>
-                <th>Flight Number</th>
-                <th>Cost</th>
-                <th>Flight Duration</th>
-                <th>Number of Stops</th>
+                <th>Price</th>
+                <th>Agent</th>
+                <th>Link</th>
+                <th>Score</th>
             </tr>
         </thead>
         <tbody>
