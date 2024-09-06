@@ -1,7 +1,6 @@
 $(document).ready(function () {
     let airportsData = [];
 
-    // Function to fetch all airports data for autocomplete
     function fetchAllAirports() {
         $.ajax({
             url: '/get-airports',
@@ -17,7 +16,6 @@ $(document).ready(function () {
         });
     }
 
-    // Function to filter airports for autocomplete suggestions
     function filterAirports(airports, term) {
         if (!Array.isArray(airports)) {
             console.error("Expected an array for airports, but received:", airports);
@@ -36,7 +34,6 @@ $(document).ready(function () {
         });
     }
 
-    // Initialize autocomplete for airport input fields
     ["#source-airport", "#destination-airport"].forEach(selector => {
         $(selector).autocomplete({
             source: function (request, response) {
@@ -46,7 +43,6 @@ $(document).ready(function () {
         });
     });
 
-    // Handle form submission for flight search
     $('#flight-form').on('submit', function (e) {
         e.preventDefault();
         const sourceAirport = $('#source-airport').val();
@@ -64,10 +60,11 @@ $(document).ready(function () {
                 return_date: returnDate
             },
             success: function (flights) {
+                console.log("Flights data:", flights); // Log the array of flights to the console
                 const tableBody = $('#flights-table tbody');
                 tableBody.empty();
 
-                if (flights.length === 0) {
+                if (!Array.isArray(flights) || flights.length === 0) {
                     $('#no-flights-message').text('No flights found for the given criteria. Please try different dates or airports.').show();
                     $('#flights-table').hide();
                     return;
@@ -77,24 +74,83 @@ $(document).ready(function () {
 
                 flights.forEach(flight => {
                     const itineraries = flight.itineraries ? `<span>${flight.itineraries}</span>` : 'N/A';
-                    const deepLink = flight.deepLink ? `<a href="${flight.deepLink}" target="_blank">Book Now</a>` : 'N/A';
-                    const legs = flight.legs ? flight.legs.map(leg => `<span>${leg}</span>`).join('<br>') : 'N/A';
-                    const segments = flight.segments ? flight.segments.map(segment => `<span>${segment.id || 'N/A'} - ${segment.duration_minutes || 'N/A'} mins</span>`).join('<br>') : 'N/A';
-                    const places = flight.places ? flight.places.map(place => `<span>${place.name || 'N/A'} (${place.id || 'N/A'})</span>`).join('<br>') : 'N/A';
+
+                    // Ensure deepLink is available and accessible
+                    let baseAgentUrl = "https://www.skyscanner.com"; // Replace this with the actual base URL of the agent
+                    const deepLink = flight.deepLink ? `<a href="${baseAgentUrl}${flight.deepLink}" target="_blank">Book Now</a>` : 'N/A';
+
+                    // Extract and format the duration from the legs array
+                    const legs = flight.legs || [];
+                    const duration = legs
+                        .map(leg => {
+                            const parts = leg.split('-');
+                            const durationPart = parts[parts.length - 1].trim(); // Extract the last part
+
+                            if (durationPart.includes('mins')) {
+                                const minutes = parseInt(durationPart.replace('mins', '').trim(), 10); // Extract the number
+                                if (!isNaN(minutes)) {
+                                    const hours = Math.floor(minutes / 60);
+                                    const mins = minutes % 60;
+                                    const hoursText = hours > 0 ? `${hours} hr` : '';
+                                    const minutesText = mins > 0 ? `${mins} min` : '';
+                                    return [hoursText, minutesText].filter(Boolean).join(' '); // Join non-empty parts
+                                }
+                            }
+                            return ''; // Return empty string if duration is not in expected format
+                        })
+                        .filter(duration => duration) // Filter out empty strings
+                        .join('<br>') || 'N/A'; // Join durations with line breaks or show 'N/A' if none found
+
+                    // Extract and clean up segments with correct date formatting
+                    const segments = flight.segments ? flight.segments.map(segment => {
+                        const departureDateTime = formatCustomDateTime(segment.departure); // Correctly format the date and time
+                        const arrivalDateTime = formatCustomDateTime(segment.arrival); // Correctly format the date and time
+                        return `<span>${departureDateTime} - ${arrivalDateTime}</span>`;
+                    }).join('<br>') : 'N/A';
+
+                    const fromToPlaces = flight.places ? (() => {
+                        const placeMap = flight.places.reduce((acc, place) => {
+                            acc[place.id] = place;
+                            return acc;
+                        }, {});
+
+                        const segments = flight.segments || [];
+                        if (segments.length === 0) {
+                            console.warn('No segments data available for flight:', flight);
+                            return { from: 'No segments data available', to: 'No segments data available' };
+                        }
+
+                        const fromPlaces = [];
+                        const toPlaces = [];
+
+                        segments.forEach(segment => {
+                            const fromPlace = placeMap[segment.origin_place_id] || { name: 'Unknown', alt_id: 'N/A' };
+                            const toPlace = placeMap[segment.destination_place_id] || { name: 'Unknown', alt_id: 'N/A' };
+
+                            fromPlaces.push(`${fromPlace.name} (${fromPlace.alt_id})`);
+                            toPlaces.push(`${toPlace.name} (${toPlace.alt_id})`);
+                        });
+
+                        return {
+                            from: fromPlaces.join('<br>'),
+                            to: toPlaces.join('<br>')
+                        };
+                    })() : { from: 'N/A', to: 'N/A' };
+
                     const carriers = flight.carriers ? flight.carriers.map(carrier => `<span>${carrier}</span>`).join('<br>') : 'N/A';
                     const agents = flight.agents ? flight.agents.map(agent => `<span>${agent}</span>`).join('<br>') : 'N/A';
                     const price = flight.price ? `$${flight.price.amount}` : 'N/A'; // Added price information
 
                     tableBody.append(`
                         <tr>
-                            <td>${itineraries}</td>
-                            <td>${deepLink}</td>
-                            <td>${legs}</td>
-                            <td>${segments}</td>
-                            <td>${places}</td>
+                           <td>${deepLink}</td>
+                            <td>${duration}</td> <!-- Updated to display only valid durations -->
+                            <td>${segments}</td> <!-- Updated to format segments correctly -->
+                            <td>${fromToPlaces.from}</td> <!-- New From column -->
+                            <td>${fromToPlaces.to}</td> <!-- New To column -->
                             <td>${carriers}</td>
                             <td>${agents}</td>
-                            <td>${price}</td> <!-- Price column added -->
+                            <td>${price}</td>
                         </tr>
                     `);
                 });
@@ -113,5 +169,23 @@ $(document).ready(function () {
         });
     });
 
-    fetchAllAirports(); // Initial fetch of all airports data for autocomplete
+    // Correct function to format date and time from "YYYY-MM-DDTHH:MM:SS" format
+    function formatCustomDateTime(dateTimeString) {
+        if (!dateTimeString) return 'Invalid date/time';
+        try {
+            const date = new Date(dateTimeString);
+            if (isNaN(date.getTime())) throw new Error('Invalid date');
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = date.toLocaleString('default', { month: 'long' });
+            const year = date.getFullYear();
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            return `${day}th ${month} ${year}, ${hours}:${minutes}`;
+        } catch (error) {
+            console.error('Error parsing date:', error);
+            return 'Invalid date/time';
+        }
+    }
+
+    fetchAllAirports();
 });
