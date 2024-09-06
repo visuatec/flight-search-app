@@ -43,6 +43,7 @@ $(document).ready(function () {
         });
     });
 
+$(document).ready(function () {
     $('#flight-form').on('submit', function (e) {
         e.preventDefault();
         const sourceAirport = $('#source-airport').val();
@@ -72,26 +73,25 @@ $(document).ready(function () {
                 $('#no-flights-message').hide(); // Hide any previous messages
 
                 flights.forEach(flight => {
-                    if (flight.pricing_options && Array.isArray(flight.pricing_options)) {
-                        flight.pricing_options.forEach(option => {
-                            if (option.items && Array.isArray(option.items)) {
-                                option.items.forEach(item => {
-                                    tableBody.append(`
-                                        <tr>
-                                            <td>${item.price.amount || 'N/A'}</td>
-                                            <td>${item.agent_id || 'N/A'}</td>
-                                            <td><a href="${item.url}" target="_blank">Book Now</a></td>
-                                            <td>${option.score || 'N/A'}</td>
-                                        </tr>
-                                    `);
-                                });
-                            } else {
-                                console.error("Unexpected data format: 'items' is undefined or not an array in pricing option:", option);
-                            }
-                        });
-                    } else {
-                        console.error("Unexpected data format: 'pricing_options' is undefined or not an array in flight:", flight);
-                    }
+                    const itineraries = flight.itineraries ? `<span>${flight.itineraries}</span>` : 'N/A';
+                    const deepLink = flight.deepLink ? `<a href="${flight.deepLink}" target="_blank">Book Now</a>` : 'N/A';
+                    const legs = flight.legs ? flight.legs.map(leg => `<span>${leg}</span>`).join('<br>') : 'N/A';
+                    const segments = flight.segments ? flight.segments.map(segment => `<span>${segment.id || 'N/A'} - ${segment.duration_minutes || 'N/A'} mins</span>`).join('<br>') : 'N/A';
+                    const places = flight.places ? flight.places.map(place => `<span>${place.name || 'N/A'} (${place.id || 'N/A'})</span>`).join('<br>') : 'N/A';
+                    const carriers = flight.carriers ? flight.carriers.map(carrier => `<span>${carrier}</span>`).join('<br>') : 'N/A';
+                    const agents = flight.agents ? flight.agents.map(agent => `<span>${agent}</span>`).join('<br>') : 'N/A';
+
+                    tableBody.append(`
+                        <tr>
+                            <td>${itineraries}</td>
+                            <td>${deepLink}</td>
+                            <td>${legs}</td>
+                            <td>${segments}</td>
+                            <td>${places}</td>
+                            <td>${carriers}</td>
+                            <td>${agents}</td>
+                        </tr>
+                    `);
                 });
 
                 $('#flights-table').show();
@@ -107,6 +107,8 @@ $(document).ready(function () {
             }
         });
     });
+});
+
 
     fetchAllAirports();
 });

@@ -57,16 +57,16 @@
     <h1>Flight Search</h1>
     <form id="flight-form">
         <label for="source-airport">Source Airport:</label>
-        <input type="text" id="source-airport" name="source_airport" required>
+        <input type="text" id="source-airport" value="AOK" name="source_airport" required>
 
         <label for="destination-airport">Destination Airport:</label>
-        <input type="text" id="destination-airport" name="destination_airport" required>
+        <input type="text" id="destination-airport" value="ATH"  name="destination_airport" required>
 
         <label for="departure-date">Departure Date:</label>
-        <input type="date" id="departure-date" name="departure_date" required>
+        <input type="date" id="departure-date" value="2024-09-20" name="departure_date" required>
 
         <label for="return-date">Return Date:</label>
-        <input type="date" id="return-date" name="return_date">
+        <input type="date" id="return-date" value="2024-09-27" name="return_date">
 
         <button type="submit">Search</button>
     </form>
@@ -76,10 +76,13 @@
     <table id="flights-table" border="1" style="display:none;">
         <thead>
             <tr>
-                <th>Price</th>
-                <th>Agent</th>
-                <th>Link</th>
-                <th>Score</th>
+                <th>Itineraries</th>
+                <th>Booking Link</th>
+                <th>Legs</th>
+                <th>Segments</th>
+                <th>Places</th>
+                <th>Carriers</th>
+                <th>Agents</th>
             </tr>
         </thead>
         <tbody>
