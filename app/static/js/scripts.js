@@ -1,6 +1,7 @@
 $(document).ready(function () {
     let airportsData = [];
 
+    // Function to fetch all airports data for autocomplete
     function fetchAllAirports() {
         $.ajax({
             url: '/get-airports',
@@ -16,6 +17,7 @@ $(document).ready(function () {
         });
     }
 
+    // Function to filter airports for autocomplete suggestions
     function filterAirports(airports, term) {
         if (!Array.isArray(airports)) {
             console.error("Expected an array for airports, but received:", airports);
@@ -34,6 +36,7 @@ $(document).ready(function () {
         });
     }
 
+    // Initialize autocomplete for airport input fields
     ["#source-airport", "#destination-airport"].forEach(selector => {
         $(selector).autocomplete({
             source: function (request, response) {
@@ -43,7 +46,7 @@ $(document).ready(function () {
         });
     });
 
-$(document).ready(function () {
+    // Handle form submission for flight search
     $('#flight-form').on('submit', function (e) {
         e.preventDefault();
         const sourceAirport = $('#source-airport').val();
@@ -80,6 +83,7 @@ $(document).ready(function () {
                     const places = flight.places ? flight.places.map(place => `<span>${place.name || 'N/A'} (${place.id || 'N/A'})</span>`).join('<br>') : 'N/A';
                     const carriers = flight.carriers ? flight.carriers.map(carrier => `<span>${carrier}</span>`).join('<br>') : 'N/A';
                     const agents = flight.agents ? flight.agents.map(agent => `<span>${agent}</span>`).join('<br>') : 'N/A';
+                    const price = flight.price ? `$${flight.price.amount}` : 'N/A'; // Added price information
 
                     tableBody.append(`
                         <tr>
@@ -90,11 +94,12 @@ $(document).ready(function () {
                             <td>${places}</td>
                             <td>${carriers}</td>
                             <td>${agents}</td>
+                            <td>${price}</td> <!-- Price column added -->
                         </tr>
                     `);
                 });
 
-                $('#flights-table').show();
+                $('#flights-table').show(); // Show the table after data is appended
             },
             error: function (error) {
                 if (error.status === 404) {
@@ -107,8 +112,6 @@ $(document).ready(function () {
             }
         });
     });
-});
 
-
-    fetchAllAirports();
+    fetchAllAirports(); // Initial fetch of all airports data for autocomplete
 });

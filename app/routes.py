@@ -67,21 +67,28 @@ def search_flights():
             response.raise_for_status()
             data = response.json()
 
-            # Extract data and handle missing keys with default values
             itineraries = data.get("itineraries", [])
-            legs = {leg["id"]: leg for leg in data.get("legs", [])}
-            segments = {segment["id"]: segment for segment in data.get("segments", [])}
-            places = {place["id"]: place for place in data.get("places", [])}
-            carriers = {carrier["id"]: carrier for carrier in data.get("carriers", [])}
-            agents = {agent["id"]: agent for agent in data.get("agents", [])}
+            legs = {leg.get("id"): leg for leg in data.get("legs", [])}
+            segments = {
+                segment.get("id"): segment for segment in data.get("segments", [])
+            }
+            places = {place.get("id"): place for place in data.get("places", [])}
+            carriers = {
+                carrier.get("id"): carrier for carrier in data.get("carriers", [])
+            }
+            agents = {agent.get("id"): agent for agent in data.get("agents", [])}
 
             for itinerary in itineraries:
-                # Initialize flight_info at the start of each iteration
+                # Extracting the price
+                price_info = itinerary.get("pricing_options", [{}])[0].get(
+                    "items", [{}]
+                )[0]
+                price = price_info.get("price", "N/A")
+
                 flight_info = {
                     "itineraries": itinerary.get("id", "N/A"),
-                    "deepLink": itinerary.get("pricing_options", [{}])[0]
-                    .get("items", [{}])[0]
-                    .get("url", "N/A"),
+                    "deepLink": price_info.get("url", "N/A"),
+                    "price": price,
                     "legs": [],
                     "segments": [],
                     "places": [],
@@ -89,29 +96,43 @@ def search_flights():
                     "agents": [],
                 }
 
+                # Separate legs into departure and return
+                departure_leg = []
+                return_leg = []
+
                 # Populate legs
                 for leg_id in itinerary.get("leg_ids", []):
-                    leg = legs.get(leg_id)
-                    if leg:
-                        flight_info["legs"].append(leg)
+                    leg = legs.get(leg_id, {})
+                    origin_place_id = leg.get("origin_place_id", "N/A")
+                    destination_place_id = leg.get("destination_place_id", "N/A")
+                    departure_time = leg.get("departure_time", "N/A")
+                    arrival_time = leg.get("arrival_time", "N/A")
+                    duration = leg.get("duration", "N/A")
 
-                        # Populate segments within each leg
-                        for segment_id in leg.get("segment_ids", []):
-                            segment = segments.get(segment_id)
-                            if segment:
-                                flight_info["segments"].append(segment)
+                    leg_info = f"{origin_place_id}-{destination_place_id}-{departure_time[:8]}-{arrival_time[:8]}--{duration} mins"
 
-                                # Populate places within each segment
-                                origin_place = places.get(
-                                    segment.get("origin_place_id")
-                                )
-                                destination_place = places.get(
-                                    segment.get("destination_place_id")
-                                )
-                                if origin_place:
-                                    flight_info["places"].append(origin_place)
-                                if destination_place:
-                                    flight_info["places"].append(destination_place)
+                    if origin_place_id == source_airport:
+                        departure_leg.append(leg_info)
+                    else:
+                        return_leg.append(leg_info)
+
+                    # Populate segments within each leg
+                    for segment_id in leg.get("segment_ids", []):
+                        segment = segments.get(segment_id, {})
+                        flight_info["segments"].append(segment)
+
+                        # Populate places within each segment
+                        origin_place = places.get(segment.get("origin_place_id"))
+                        destination_place = places.get(
+                            segment.get("destination_place_id")
+                        )
+                        if origin_place:
+                            flight_info["places"].append(origin_place)
+                        if destination_place:
+                            flight_info["places"].append(destination_place)
+
+                # Combine departure and return legs with a separator
+                flight_info["legs"] = departure_leg + ["|"] + return_leg
 
                 # Populate carriers based on segments
                 for segment in flight_info["segments"]:
