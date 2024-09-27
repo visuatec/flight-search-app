@@ -1,6 +1,7 @@
 $(document).ready(function () {
     let airportsData = [];
 
+    // Fetch all airports data for autocomplete
     function fetchAllAirports() {
         $.ajax({
             url: '/get-airports',
@@ -15,7 +16,41 @@ $(document).ready(function () {
             }
         });
     }
+    // Markdown converter initialization
+    var converter = new showdown.Converter();
 
+    // Handle prompt submission and sending it to /send_prompt endpoint
+    $('#send-prompt-btn').on('click', function () {
+        const prompt = $('#custom-prompt').val();
+
+        if (!prompt) {
+            alert('Please enter a valid prompt.');
+            return;
+        }
+
+        $.ajax({
+            url: '/send_prompt',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ prompt: prompt }),
+            success: function (response) {
+                const resultDiv = $('#prompt-response');
+                if (response && response.summary) {
+                    // Convert Markdown to HTML
+                    const htmlContent = converter.makeHtml(response.summary);
+                    // Inject HTML into the div
+                    resultDiv.html(htmlContent).show();
+                } else {
+                    resultDiv.html('<p>Error: No response from GPT-4o.</p>').show();
+                }
+            },
+            error: function (error) {
+                $('#prompt-response').html('<p>Error: Could not send prompt.</p>').show();
+            }
+        });
+    });
+
+    // Filter airports based on the search term
     function filterAirports(airports, term) {
         if (!Array.isArray(airports)) {
             console.error("Expected an array for airports, but received:", airports);
@@ -34,6 +69,7 @@ $(document).ready(function () {
         });
     }
 
+    // Autocomplete for source and destination airport fields
     ["#source-airport", "#destination-airport"].forEach(selector => {
         $(selector).autocomplete({
             source: function (request, response) {
@@ -43,6 +79,7 @@ $(document).ready(function () {
         });
     });
 
+    // Handle the flight search form submission
     $('#flight-form').on('submit', function (e) {
         e.preventDefault();
         const sourceAirport = $('#source-airport').val();
@@ -60,7 +97,7 @@ $(document).ready(function () {
                 return_date: returnDate
             },
             success: function (flights) {
-                console.log("Flights data:", flights); // Log the array of flights to the console
+                console.log("Flights data:", flights);
                 const tableBody = $('#flights-table tbody');
                 tableBody.empty();
 
@@ -70,55 +107,53 @@ $(document).ready(function () {
                     return;
                 }
 
-                $('#no-flights-message').hide(); // Hide any previous messages
+                $('#no-flights-message').hide();
 
                 flights.forEach(flight => {
-                    const itineraries = flight.itineraries ? `<span>${flight.itineraries}</span>` : 'N/A';
+                    const departureSegments = flight.segments.slice(0, Math.floor(flight.segments.length / 2));
+                    const returnSegments = flight.segments.slice(Math.floor(flight.segments.length / 2));
 
-                    // Ensure deepLink is available and accessible
-                    let baseAgentUrl = "https://www.skyscanner.com"; // Replace this with the actual base URL of the agent
+                    let baseAgentUrl = "https://www.skyscanner.com";
                     const deepLink = flight.deepLink ? `<a href="${baseAgentUrl}${flight.deepLink}" target="_blank">Book Now</a>` : 'N/A';
 
-                    // Extract and format the duration from the legs array
-                    const legs = flight.legs || [];
-                    const duration = legs
-                        .map(leg => {
-                            const parts = leg.split('-');
-                            const durationPart = parts[parts.length - 1].trim(); // Extract the last part
+                    const formatDuration = (leg) => {
+                        const parts = leg.split('-');
+                        const durationPart = parts[parts.length - 1].trim();
 
-                            if (durationPart.includes('mins')) {
-                                const minutes = parseInt(durationPart.replace('mins', '').trim(), 10); // Extract the number
-                                if (!isNaN(minutes)) {
-                                    const hours = Math.floor(minutes / 60);
-                                    const mins = minutes % 60;
-                                    const hoursText = hours > 0 ? `${hours} hr` : '';
-                                    const minutesText = mins > 0 ? `${mins} min` : '';
-                                    return [hoursText, minutesText].filter(Boolean).join(' '); // Join non-empty parts
-                                }
+                        if (durationPart.includes('mins')) {
+                            const minutes = parseInt(durationPart.replace('mins', '').trim(), 10);
+                            if (!isNaN(minutes)) {
+                                const hours = Math.floor(minutes / 60);
+                                const mins = minutes % 60;
+                                const hoursText = hours > 0 ? `${hours} hr` : '';
+                                const minutesText = mins > 0 ? `${mins} min` : '';
+                                return [hoursText, minutesText].filter(Boolean).join(' ');
                             }
-                            return ''; // Return empty string if duration is not in expected format
-                        })
-                        .filter(duration => duration) // Filter out empty strings
-                        .join('<br>') || 'N/A'; // Join durations with line breaks or show 'N/A' if none found
+                        }
+                        return 'N/A';
+                    };
 
-                    // Extract and clean up segments with correct date formatting
-                    const segments = flight.segments ? flight.segments.map(segment => {
-                        const departureDateTime = formatCustomDateTime(segment.departure); // Correctly format the date and time
-                        const arrivalDateTime = formatCustomDateTime(segment.arrival); // Correctly format the date and time
-                        return `<span>${departureDateTime} - ${arrivalDateTime}</span>`;
-                    }).join('<br>') : 'N/A';
+                    const durations = {
+                        departure: formatDuration(flight.legs[1] || 'N/A'),
+                        return: formatDuration(flight.legs[2] || 'N/A')
+                    };
 
-                    const fromToPlaces = flight.places ? (() => {
+                    const formatSegments = (segments) => segments.map(segment => {
+                        const departureDateTime = formatCustomDateTime(segment.departure);
+                        const arrivalDateTime = formatCustomDateTime(segment.arrival);
+                        return `${departureDateTime} - ${arrivalDateTime}`;
+                    }).join('<br>');
+
+                    const formattedSegments = {
+                        departure: formatSegments(departureSegments),
+                        return: formatSegments(returnSegments)
+                    };
+
+                    const formatFromToPlaces = (segments) => {
                         const placeMap = flight.places.reduce((acc, place) => {
                             acc[place.id] = place;
                             return acc;
                         }, {});
-
-                        const segments = flight.segments || [];
-                        if (segments.length === 0) {
-                            console.warn('No segments data available for flight:', flight);
-                            return { from: 'No segments data available', to: 'No segments data available' };
-                        }
 
                         const fromPlaces = [];
                         const toPlaces = [];
@@ -135,27 +170,43 @@ $(document).ready(function () {
                             from: fromPlaces.join('<br>'),
                             to: toPlaces.join('<br>')
                         };
-                    })() : { from: 'N/A', to: 'N/A' };
+                    };
 
-                    const carriers = flight.carriers ? flight.carriers.map(carrier => `<span>${carrier}</span>`).join('<br>') : 'N/A';
+                    const fromToPlaces = {
+                        departure: formatFromToPlaces(departureSegments),
+                        return: formatFromToPlaces(returnSegments)
+                    };
+
+                    function formatCarriers(carriers) {
+                        const uniqueCarriers = [...new Set(carriers)];
+                        return uniqueCarriers.join('<br>') || 'Unknown Carrier';
+                    }
+
                     const agents = flight.agents ? flight.agents.map(agent => `<span>${agent}</span>`).join('<br>') : 'N/A';
-                    const price = flight.price ? `$${flight.price.amount}` : 'N/A'; // Added price information
+                    const price = flight.price ? `$${flight.price.amount}` : 'N/A';
 
                     tableBody.append(`
                         <tr>
-                           <td>${deepLink}</td>
-                            <td>${duration}</td> <!-- Updated to display only valid durations -->
-                            <td>${segments}</td> <!-- Updated to format segments correctly -->
-                            <td>${fromToPlaces.from}</td> <!-- New From column -->
-                            <td>${fromToPlaces.to}</td> <!-- New To column -->
-                            <td>${carriers}</td>
-                            <td>${agents}</td>
-                            <td>${price}</td>
+                            <td rowspan="2">${deepLink}</td> <!-- Booking link remains in a single cell -->
+                            <td>${durations.departure}</td>
+                            <td>${formattedSegments.departure}</td>
+                            <td>${fromToPlaces.departure.from}</td>
+                            <td>${fromToPlaces.departure.to}</td>
+                            <td>${formatCarriers(flight.carriers)}</td> <!-- Use formatted carriers without duplicates -->
+                            <td rowspan="2">${agents}</td>
+                            <td rowspan="2">${price}</td>
+                        </tr>
+                        <tr>
+                            <td>${durations.return}</td>
+                            <td>${formattedSegments.return}</td>
+                            <td>${fromToPlaces.return.from}</td>
+                            <td>${fromToPlaces.return.to}</td>
+                            <td>${formatCarriers(flight.carriers)}</td> <!-- Repeat for return leg if needed -->
                         </tr>
                     `);
                 });
 
-                $('#flights-table').show(); // Show the table after data is appended
+                $('#flights-table').show();
             },
             error: function (error) {
                 if (error.status === 404) {
@@ -169,7 +220,7 @@ $(document).ready(function () {
         });
     });
 
-    // Correct function to format date and time from "YYYY-MM-DDTHH:MM:SS" format
+    // Format date and time from "YYYY-MM-DDTHH:MM:SS" format
     function formatCustomDateTime(dateTimeString) {
         if (!dateTimeString) return 'Invalid date/time';
         try {
@@ -187,5 +238,73 @@ $(document).ready(function () {
         }
     }
 
+    function sortTable(columnIndex, isNumeric, isAscending) {
+        const rows = $('#flights-table tbody tr').get();
+        const rowGroups = [];
+
+        for (let i = 0; i < rows.length; i += 2) {
+            rowGroups.push([rows[i], rows[i + 1]]);
+        }
+
+        rowGroups.sort((a, b) => {
+            let A = $(a[0]).children('td').eq(columnIndex).text().toUpperCase();
+            let B = $(b[0]).children('td').eq(columnIndex).text().toUpperCase();
+
+            if (isNumeric) {
+                A = parseFloat(A.replace(/[^\d.-]/g, '')) || 0;
+                B = parseFloat(B.replace(/[^\d.-]/g, '')) || 0;
+            } else if (A.includes('hr') || A.includes('min')) {
+                A = durationToMinutes(A);
+                B = durationToMinutes(B);
+            }
+
+            if (A < B) {
+                return isAscending ? -1 : 1;
+            }
+            if (A > B) {
+                return isAscending ? 1 : -1;
+            }
+            return 0;
+        });
+
+        $.each(rowGroups, (index, rowGroup) => {
+            $('#flights-table tbody').append(rowGroup[0]);
+            $('#flights-table tbody').append(rowGroup[1]);
+        });
+    }
+
+    function durationToMinutes(duration) {
+        let hours = 0, minutes = 0;
+        if (duration.includes('hr')) {
+            const hrParts = duration.split('hr');
+            hours = parseInt(hrParts[0].trim());
+            if (hrParts[1]) {
+                minutes = parseInt(hrParts[1].replace('min', '').trim()) || 0;
+            }
+        } else if (duration.includes('min')) {
+            minutes = parseInt(duration.replace('min', '').trim());
+        }
+        return (hours * 60) + minutes;
+    }
+
+    let durationAscending = true;
+    let priceAscending = true;
+    $('#sort-duration').on('click', function () {
+        sortTable(1, false, durationAscending);
+        durationAscending = !durationAscending;
+        updateSortArrow($(this), durationAscending);
+    });
+    $('#sort-price').on('click', function () {
+        sortTable(7, true, priceAscending);
+        priceAscending = !priceAscending;
+        updateSortArrow($(this), priceAscending);
+    });
+
+    function updateSortArrow(element, ascending) {
+        element.siblings().removeClass('sort-asc sort-desc');
+        element.toggleClass('sort-asc', ascending).toggleClass('sort-desc', !ascending);
+    }
+
+    // Fetch airports on page load
     fetchAllAirports();
 });

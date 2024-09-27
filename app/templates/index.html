@@ -7,6 +7,8 @@
     <title>Flight Search</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://cdn.jsdelivr.net/npm/showdown@1.9.1/dist/showdown.min.js"></script>
+
     <style>
         /* Additional styling for the page */
         body {
@@ -26,6 +28,13 @@
             margin-top: 5px;
             width: 200px;
         }
+        textarea {
+            padding: 8px;
+            margin-top: 5px;
+            width: 100%;
+            min-height: 80px; /* Minimum height for textarea */
+            resize: vertical; /* Allows vertical resizing */
+        }
         button {
             cursor: pointer;
             width: 220px;
@@ -42,6 +51,19 @@
         }
         th {
             background-color: #f2f2f2;
+            cursor: pointer; /* Add pointer cursor to indicate clickable */
+        }
+        th .sort-arrow {
+            margin-left: 5px;
+            font-size: 10px;
+            display: inline-block;
+            transition: transform 0.2s;
+        }
+        .sort-asc .sort-arrow {
+            transform: rotate(180deg); /* Rotate to show ascending */
+        }
+        .sort-desc .sort-arrow {
+            transform: rotate(0deg); /* Default to descending */
         }
         tbody tr:nth-child(even) {
             background-color: #f9f9f9;
@@ -51,22 +73,59 @@
             margin-top: 20px;
             display: none;
         }
+        iframe {
+            width: 100%;
+            height: 300px;
+            border: 1px solid #ccc;
+            margin-bottom: 20px;
+        }
+        #result-iframe {
+            display: none;
+        }
+        #prompt-response {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
     <h1>Flight Search</h1>
+
+
+
+    <!-- Updated text area for the prompt -->
+    <form id="prompt-form">
+        <label for="custom-prompt">Enter Custom Prompt:</label>
+        <textarea id="custom-prompt" name="custom_prompt" placeholder="Enter your custom prompt" required rows="10">
+    Please find the cheapest flights:
+
+        From any country in SOUTH EAST ASIA
+        To any country in EUROPE
+        With departure OCTOBER 08 2024 
+        And return OCTOBER 15 2024
+        For 1 ADULT
+        And class ECONOMY
+        </textarea>
+        <button id="send-prompt-btn" type="button">Send Prompt</button>
+    </form>
+
+    <!-- Text field for the prompt response -->
+    <div id="prompt-response" style="border: 1px solid #ddd; padding: 10px; margin-bottom: 20px; display: none;"></div>
+
+    <!-- Flight Search Form -->
     <form id="flight-form">
         <label for="source-airport">Source Airport:</label>
-        <input type="text" id="source-airport" value="AOK" name="source_airport" required>
+        <input type="text" id="source-airport" value="BKK" name="source_airport" required>
 
         <label for="destination-airport">Destination Airport:</label>
-        <input type="text" id="destination-airport" value="ATH"  name="destination_airport" required>
+        <input type="text" id="destination-airport" value="IST" name="destination_airport" required>
 
         <label for="departure-date">Departure Date:</label>
-        <input type="date" id="departure-date" value="2024-09-20" name="departure_date" required>
+        <input type="date" id="departure-date" value="2024-10-08" name="departure_date" required>
 
         <label for="return-date">Return Date:</label>
-        <input type="date" id="return-date" value="2024-09-27" name="return_date">
+        <input type="date" id="return-date" value="2024-10-15" name="return_date">
 
         <button type="submit">Search</button>
     </form>
@@ -77,13 +136,13 @@
         <thead>
             <tr>
                 <th>Booking Link</th>
-                <th>Duration</th>
+                <th id="sort-duration">Duration <span class="sort-arrow">&#x25B2;</span></th> <!-- Added sorting arrow -->
                 <th>Segments</th>
                 <th>From</th>
                 <th>To</th>
                 <th>Carriers</th>
                 <th>Agents</th>
-                <th>Price</th> <!-- Add this line for the Price column -->
+                <th id="sort-price">Price <span class="sort-arrow">&#x25B2;</span></th> <!-- Added sorting arrow -->
             </tr>
         </thead>
         <tbody>
@@ -91,12 +150,8 @@
         </tbody>
     </table>
 
-
-    <!-- jQuery and jQuery UI for autocomplete functionality -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-
-    <!-- Custom script to manage autocomplete and form submission -->
     <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
 </body>
 </html>

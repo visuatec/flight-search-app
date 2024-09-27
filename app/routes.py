@@ -5,6 +5,7 @@ import logging
 import requests
 import os
 import time
+import openai
 from dotenv import load_dotenv
 
 # Initialize Blueprint
@@ -17,6 +18,7 @@ logger = logging.getLogger(__name__)
 # Load environment variables
 load_dotenv()
 api_key = os.getenv("FLIGHT_API_KEY")
+openai.api_key = os.getenv("CHATGPT")
 
 
 # Route for the home page
@@ -39,6 +41,77 @@ def get_airports():
     except Exception as e:
         logger.error(f"Error fetching airports: {e}")
         return jsonify({"error": "Failed to fetch airports"}), 500
+
+
+def split_message(message, max_length):
+    """Split a long message into smaller chunks."""
+    return [message[i : i + max_length] for i in range(0, len(message), max_length)]
+
+
+def format_data(user_message, api_key, retries=3, delay=5):
+    max_message_length = 8000  # Adjust based on the token limit
+    user_message_chunks = split_message(user_message, max_message_length)
+
+    openai.api_key = api_key
+    combined_output = []
+    system_message = (
+        "You are my travel planning assistant. You find the best flights for me."
+    )
+    for chunk in user_message_chunks:
+        response = None
+        for attempt in range(retries):
+            try:
+                response = openai.ChatCompletion.create(
+                    model="gpt-4o",
+                    messages=[
+                        {"role": "system", "content": system_message},
+                        {"role": "user", "content": chunk},
+                    ],
+                )
+                if response:
+                    break
+            except Exception as e:
+                if attempt < retries - 1:
+                    time.sleep(delay)
+                else:
+                    raise e
+
+        if response and "choices" in response:
+            choice = response.choices[0]
+            formatted_data = choice["message"]["content"].strip()
+            combined_output.append(formatted_data)
+        else:
+            raise ValueError(
+                "The OpenAI API response did not contain the expected choices data."
+            )
+
+    # Combine all chunks into one response
+    full_response = "".join(combined_output)
+
+    # Debugging information: log the raw response
+    print("OpenAI full response:", full_response)
+
+    return full_response
+
+
+@main.route("/send_prompt", methods=["POST"])
+def send_prompt():
+    try:
+        data = request.json
+        prompt = data.get("prompt", "")
+
+        if not prompt:
+            return jsonify({"error": "No prompt provided"}), 400
+
+        response = format_data(prompt, openai.api_key, retries=3, delay=5)
+
+        summary = response.strip()
+
+        return jsonify({"summary": summary}), 200
+
+    except openai.error.OpenAIError as e:
+        logger.error(f"Error with OpenAI API: {e}")
+        return jsonify({"error": "Failed to process data with OpenAI"}), 500
 
 
 @main.route("/search-flights", methods=["GET"])
