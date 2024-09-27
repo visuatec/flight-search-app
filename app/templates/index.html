@@ -87,6 +87,10 @@
             border-radius: 10px;
             display: none;
         }
+        /* Change cursor to pointer on hover for sort icons and date inputs */
+        #sort-duration, #sort-price, #departure-date, #return-date {
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -96,7 +100,6 @@
         <!-- Updated text area for the prompt -->
         <form id="prompt-form" class="mb-4">
             <div class="form-group">
-                
                 <label for="custom-prompt">Enter Custom Prompt:</label>
                 <span class="tooltip-btn" data-toggle="modal" data-target="#promptModal">!</span>
                 <textarea id="custom-prompt" class="form-control" name="custom_prompt" placeholder="Enter your custom prompt" required rows="12">
@@ -108,7 +111,7 @@ Please find the cheapest flights:
     And return OCTOBER 15 2024
     For 1 ADULT
     And class ECONOMY
-    In your formatted response, include : Departure, Return, Airline and Price in USD
+    In your formatted response, include : Airports, Departure Date and Time, Return Date and Time, Durations, Airline and Price in USD
     Do not provide instructions. Search for cheap flights only according to my criteria above
                 </textarea>
             </div>
@@ -126,7 +129,6 @@ Please find the cheapest flights:
         <form id="flight-form" class="mb-4">
             <div class="form-row">
                 <div class="form-group col-sm-6">
-                    
                     <label for="source-airport">Source Airport:</label>
                     <span class="tooltip-btn" data-toggle="tooltip" data-placement="top" title="Type ahead to search by airport name or IATA code.">?</span>
                     <input type="text" class="form-control" id="source-airport" value="BKK" name="source_airport" required>
@@ -183,13 +185,14 @@ Please find the cheapest flights:
                     </button>
                 </div>
                 <div class="modal-body">
-                    <div class="prompt-sample" onclick="insertPrompt('Please find the cheapest flights:\n\nFrom TOKYO to PARIS\nDeparting on DECEMBER 1 2024 \nReturning on DECEMBER 10 2024 \nFor 1 ADULT \nAnd class ECONOMY \nIn your formatted response, include : Departure, Return, Airline and Price in USD \nDo not provide instructions. Search for cheap flights only according to my criteria above')">Find the cheapest flights from Tokyo to Paris, departing on December 1, 2024, returning on December 10, 2024.</div>
-                    <div class="prompt-sample" onclick="insertPrompt('Please find the cheapest flights:\n\nFrom NEW YORK to LONDON \nWith departure on JULY 5 2024 \nAnd returning on JULY 15 2024 \nFor 2 ADULTS \nAnd class BUSINESS \nIn your formatted response, include : Departure, Return, Airline and Price in USD \nDo not provide instructions. Search for cheap flights only according to my criteria above')">Search for flights from New York to London for 2 adults in business class, departing on July 5, 2024, and returning on July 15, 2024.</div>
-                    <div class="prompt-sample" onclick="insertPrompt('Please find the cheapest flights:\n\nFrom any country in SOUTH EAST ASIA \nTo any country in EUROPE, \nWith departure on OCTOBER 08 2024, \nAnd returning on OCTOBER 15 2024 \nFor 1 ADULT \nAnd class ECONOMY \nIn your formatted response, include : Departure, Return, Airline and Price in USD \nDo not provide instructions. Search for cheap flights only according to my criteria above')">Find flights from any airport in South East Asia to any airport in Europe, departing on August 15, 2024, and returning on August 22, 2024.</div>
+                    <div class="prompt-sample" onclick="insertPrompt('Please find the cheapest flights:\n\nFrom TOKYO to PARIS\nDeparting on DECEMBER 1 2024 \nReturning on DECEMBER 10 2024 \nFor 1 ADULT \nAnd class ECONOMY \nIn your formatted response, include : Airports, Departure Date and Time, Return Date and Time, Durations, Airline and Price in USD \nDo not provide instructions. Search for cheap flights only according to my criteria above')">Find the cheapest flights from Tokyo to Paris, departing on December 1, 2024, returning on December 10, 2024.</div>
+                    <div class="prompt-sample" onclick="insertPrompt('Please find the cheapest flights:\n\nFrom NEW YORK to LONDON \nWith departure on JULY 5 2024 \nAnd returning on JULY 15 2024 \nFor 2 ADULTS \nAnd class BUSINESS \nIn your formatted response, include : Airports, Departure Date and Time, Return Date and Time, Durations, Airline and Price in USD  \nDo not provide instructions. Search for cheap flights only according to my criteria above')">Search for flights from New York to London for 2 adults in business class, departing on July 5, 2024, and returning on July 15, 2024.</div>
+                    <div class="prompt-sample" onclick="insertPrompt('Please find the cheapest flights:\n\nFrom any country in SOUTH EAST ASIA \nTo any country in EUROPE, \nWith departure on OCTOBER 08 2024, \nAnd returning on OCTOBER 15 2024 \nFor 1 ADULT \nAnd class ECONOMY \nIn your formatted response, include : Airports, Departure Date and Time, Return Date and Time, Durations, Airline and Price in USD  \nDo not provide instructions. Search for cheap flights only according to my criteria above')">Find flights from any airport in South East Asia to any airport in Europe, departing on August 15, 2024, and returning on August 22, 2024.</div>
                 </div>
             </div>
         </div>
     </div>
+
     <!-- Include jQuery, Bootstrap, and scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
@@ -205,6 +208,6 @@ Please find the cheapest flights:
             // Close the modal
             $('#promptModal').modal('hide');
         }
-</script>
+    </script>
 </body>
 </html>

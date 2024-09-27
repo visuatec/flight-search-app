@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flight Search</title>
 
@@ -92,12 +93,13 @@
     <div class="container">
         <h1 class="text-center text-primary mb-4">Flight Search</h1>
 
-        <!-- Updated text area for the prompt with tooltip -->
+        <!-- Updated text area for the prompt -->
         <form id="prompt-form" class="mb-4">
             <div class="form-group">
+                
                 <label for="custom-prompt">Enter Custom Prompt:</label>
-                <span class="tooltip-btn" data-toggle="modal" data-target="#promptModal">?</span>
-                <textarea id="custom-prompt" class="form-control" name="custom_prompt" placeholder="Enter your custom prompt" required rows="10">
+                <span class="tooltip-btn" data-toggle="modal" data-target="#promptModal">!</span>
+                <textarea id="custom-prompt" class="form-control" name="custom_prompt" placeholder="Enter your custom prompt" required rows="12">
 Please find the cheapest flights:
 
     From any country in SOUTH EAST ASIA
@@ -106,20 +108,16 @@ Please find the cheapest flights:
     And return OCTOBER 15 2024
     For 1 ADULT
     And class ECONOMY
+    In your formatted response, include : Departure, Return, Airline and Price in USD
+    Do not provide instructions. Search for cheap flights only according to my criteria above
                 </textarea>
             </div>
-            <!-- Send Prompt Button with Tooltip -->
+            
             <button id="send-prompt-btn" type="button" class="btn btn-primary">
                 Send Prompt
             </button>
             <span class="tooltip-btn" data-toggle="tooltip" data-placement="top" title="If the response is not satisfactory, click the button again to retry.">?</span>
         </form>
-
-        <!-- Button to preview the formatted content -->
-        <button id="preview-prompt-btn" type="button" class="btn btn-secondary">Preview Formatted Prompt</button>
-
-        <!-- Div to show formatted content -->
-        <div id="formatted-content" class="p-3"></div>
 
         <!-- Text field for the prompt response -->
         <div id="prompt-response" class="p-3"></div>
@@ -128,6 +126,7 @@ Please find the cheapest flights:
         <form id="flight-form" class="mb-4">
             <div class="form-row">
                 <div class="form-group col-sm-6">
+                    
                     <label for="source-airport">Source Airport:</label>
                     <span class="tooltip-btn" data-toggle="tooltip" data-placement="top" title="Type ahead to search by airport name or IATA code.">?</span>
                     <input type="text" class="form-control" id="source-airport" value="BKK" name="source_airport" required>
@@ -174,7 +173,6 @@ Please find the cheapest flights:
         </div>
     </div>
 
-    <!-- Modal for Sample Prompts -->
     <div class="modal fade" id="promptModal" tabindex="-1" role="dialog" aria-labelledby="promptModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
@@ -185,43 +183,28 @@ Please find the cheapest flights:
                     </button>
                 </div>
                 <div class="modal-body">
-                    <div class="prompt-sample" onclick="insertPrompt('Please find the cheapest flights:\n\nFrom TOKYO to PARIS,\ndeparting on DECEMBER 1, 2024,\nreturning on DECEMBER 10, 2024. \n1 ADULT \nECONOMY class')">Find the cheapest flights from Tokyo to Paris, departing on December 1, 2024, returning on December 10, 2024.</div>
-                    <div class="prompt-sample" onclick="insertPrompt('Please find the cheapest flights:\n\nFrom NEW YORK to LONDON \nfor 2 ADULTS in BUSINESS class, \ndeparting on JULY 5, 2024, vand returning on JULY 15, 2024.\nECONOMY class')">Search for flights from New York to London for 2 adults in business class, departing on July 5, 2024, and returning on July 15, 2024.</div>
-                    <div class="prompt-sample" onclick="insertPrompt('Please find the cheapest flights:\n\nFrom any airport in SOUTH EAST ASIA \nto any airport in EUROPE, \ndeparting on AUGUST 15, 2024, \nand returning on AUGUST 22, 2024.\n1 ADULT \nECONOMY class')">Find flights from any airport in South East Asia to any airport in Europe, departing on August 15, 2024, and returning on August 22, 2024.</div>
+                    <div class="prompt-sample" onclick="insertPrompt('Please find the cheapest flights:\n\nFrom TOKYO to PARIS\nDeparting on DECEMBER 1 2024 \nReturning on DECEMBER 10 2024 \nFor 1 ADULT \nAnd class ECONOMY \nIn your formatted response, include : Departure, Return, Airline and Price in USD \nDo not provide instructions. Search for cheap flights only according to my criteria above')">Find the cheapest flights from Tokyo to Paris, departing on December 1, 2024, returning on December 10, 2024.</div>
+                    <div class="prompt-sample" onclick="insertPrompt('Please find the cheapest flights:\n\nFrom NEW YORK to LONDON \nWith departure on JULY 5 2024 \nAnd returning on JULY 15 2024 \nFor 2 ADULTS \nAnd class BUSINESS \nIn your formatted response, include : Departure, Return, Airline and Price in USD \nDo not provide instructions. Search for cheap flights only according to my criteria above')">Search for flights from New York to London for 2 adults in business class, departing on July 5, 2024, and returning on July 15, 2024.</div>
+                    <div class="prompt-sample" onclick="insertPrompt('Please find the cheapest flights:\n\nFrom any country in SOUTH EAST ASIA \nTo any country in EUROPE, \nWith departure on OCTOBER 08 2024, \nAnd returning on OCTOBER 15 2024 \nFor 1 ADULT \nAnd class ECONOMY \nIn your formatted response, include : Departure, Return, Airline and Price in USD \nDo not provide instructions. Search for cheap flights only according to my criteria above')">Find flights from any airport in South East Asia to any airport in Europe, departing on August 15, 2024, and returning on August 22, 2024.</div>
                 </div>
             </div>
         </div>
     </div>
-
     <!-- Include jQuery, Bootstrap, and scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
-
     <script>
         $(function () {
             $('[data-toggle="tooltip"]').tooltip(); // Enable tooltips
         });
-
         function insertPrompt(promptText) {
             // Set the formatted text into the textarea
             document.getElementById('custom-prompt').value = promptText;
             // Close the modal
             $('#promptModal').modal('hide');
         }
-
-        // Function to preview the formatted prompt
-        document.getElementById('preview-prompt-btn').addEventListener('click', function () {
-            var converter = new showdown.Converter();
-            var markdownText = document.getElementById('custom-prompt').value;
-            var htmlContent = converter.makeHtml(markdownText);
-
-            // Insert the formatted content into the div
-            document.getElementById('formatted-content').innerHTML = htmlContent;
-            // Show the formatted content div
-            document.getElementById('formatted-content').style.display = 'block';
-        });
-    </script>
+</script>
 </body>
 </html>
