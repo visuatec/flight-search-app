@@ -16,6 +16,7 @@ $(document).ready(function () {
             }
         });
     }
+
     // Markdown converter initialization
     var converter = new showdown.Converter();
 
