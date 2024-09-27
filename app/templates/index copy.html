@@ -64,9 +64,6 @@
             border-radius: 10px; /* Rounded table borders */
             overflow: hidden; /* To keep borders rounded */
         }
-        .table-responsive {
-            overflow-x: auto; /* Ensure table scrolls horizontally on small screens */
-        }
         #no-flights-message {
             color: red;
             margin-top: 20px;
@@ -78,9 +75,6 @@
             margin-bottom: 20px;
             background-color: #f8f9fa; /* Light background */
             border-radius: 10px; /* Rounded corners */
-        }
-        .sort-arrow {
-            cursor: pointer; /* Pointer cursor for sorting */
         }
     </style>
 </head>
@@ -112,21 +106,21 @@ Please find the cheapest flights:
         <!-- Flight Search Form -->
         <form id="flight-form" class="mb-4">
             <div class="form-row">
-                <div class="form-group col-sm-6">
+                <div class="form-group col-md-6">
                     <label for="source-airport">Source Airport:</label>
                     <input type="text" class="form-control" id="source-airport" value="BKK" name="source_airport" required>
                 </div>
-                <div class="form-group col-sm-6">
+                <div class="form-group col-md-6">
                     <label for="destination-airport">Destination Airport:</label>
                     <input type="text" class="form-control" id="destination-airport" value="IST" name="destination_airport" required>
                 </div>
             </div>
             <div class="form-row">
-                <div class="form-group col-sm-6">
+                <div class="form-group col-md-6">
                     <label for="departure-date">Departure Date:</label>
                     <input type="date" class="form-control" id="departure-date" value="2024-10-08" name="departure_date" required>
                 </div>
-                <div class="form-group col-sm-6">
+                <div class="form-group col-md-6">
                     <label for="return-date">Return Date:</label>
                     <input type="date" class="form-control" id="return-date" value="2024-10-15" name="return_date">
                 </div>
@@ -137,25 +131,23 @@ Please find the cheapest flights:
         <div id="no-flights-message"></div> <!-- Placeholder for no flights message -->
 
         <!-- Flight Data Table -->
-        <div class="table-responsive">
-            <table id="flights-table" class="table table-bordered table-hover" style="display:none;">
-                <thead>
-                    <tr>
-                        <th>Booking Link</th>
-                        <th id="sort-duration">Duration <span class="sort-arrow">&#x25B2;</span></th> <!-- Added sorting arrow -->
-                        <th>Segments</th>
-                        <th>From</th>
-                        <th>To</th>
-                        <th>Carriers</th>
-                        <th>Agents</th>
-                        <th id="sort-price">Price <span class="sort-arrow">&#x25B2;</span></th> <!-- Added sorting arrow -->
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Flight data will be inserted here -->
-                </tbody>
-            </table>
-        </div>
+        <table id="flights-table" class="table table-bordered table-hover" style="display:none;">
+            <thead>
+                <tr>
+                    <th>Booking Link</th>
+                    <th id="sort-duration">Duration <span class="sort-arrow">&#x25B2;</span></th> <!-- Added sorting arrow -->
+                    <th>Segments</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Carriers</th>
+                    <th>Agents</th>
+                    <th id="sort-price">Price <span class="sort-arrow">&#x25B2;</span></th> <!-- Added sorting arrow -->
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Flight data will be inserted here -->
+            </tbody>
+        </table>
     </div>
 
     <!-- Include jQuery, Bootstrap, and scripts -->
